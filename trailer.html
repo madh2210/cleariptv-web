@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClearIPTV · tráiler</title>
+<meta name="robots" content="noindex">
+<!-- Fondo de la ficha de ClearIPTV para Windows: la imagen con zoom lento y, encima, el tráiler de YouTube
+     sin sonido con el reproductor oficial. Uso: trailer.html?v=CLAVE&img=URL_IMAGEN&d=RETARDO_ZOOM[&s=1 con sonido]
+     Avisa a la app con «playing» y «ended». -->
+<style>
+html,body{margin:0;height:100%;background:#080B16;overflow:hidden}
+#fx{position:absolute;inset:0;opacity:.45;transition:opacity 1.2s;-webkit-mask-image:linear-gradient(#000 35%,transparent 90%);mask-image:linear-gradient(#000 35%,transparent 90%)}
+#img{position:absolute;inset:0;background:center/cover no-repeat;transform-origin:center;animation:drift 24s linear infinite alternate}
+#p{position:absolute;top:50%;left:50%;width:max(100vw,177.78vh);height:max(100vh,56.25vw);transform:translate(-50%,-50%);opacity:0;transition:opacity .9s}
+#p.on{opacity:1}
+body.on #fx{opacity:1}
+@keyframes drift{from{transform:translateX(0) scale(1)}to{transform:translateX(-2vw) scale(1.08)}}
+</style>
+</head><body><div id="fx"><div id="img"></div><div id="p"></div></div>
+<script>
+function send(m){
+  try{ if(window.chrome&&chrome.webview){ chrome.webview.postMessage(m); return; } }catch(e){}
+  try{ if(window.Trailer&&Trailer.postMessage){ Trailer.postMessage(m); return; } }catch(e){}
+  try{ if(window.webkit&&webkit.messageHandlers&&webkit.messageHandlers.trailer){ webkit.messageHandlers.trailer.postMessage(m); return; } }catch(e){}
+}
+var q=new URLSearchParams(location.search), v=q.get('v')||'', img=q.get('img')||'', d=parseFloat(q.get('d')||'0')||0, sound=q.get('s')=='1', started=false;
+var el=document.getElementById('img');
+if(/^https:\/\//.test(img)) el.style.backgroundImage='url("'+img.replace(/"/g,'%22')+'")';
+el.style.animationDelay=d+'s';
+if(!/^[\w-]{6,20}$/.test(v)) send('ended');
+function onYouTubeIframeAPIReady(){
+  new YT.Player('p',{videoId:v,host:'https://www.youtube-nocookie.com',
+    playerVars:{autoplay:1,mute:sound?0:1,controls:0,disablekb:1,fs:0,rel:0,playsinline:1,iv_load_policy:3,origin:location.origin},
+    events:{
+      onReady:function(e){
+        var p=e.target;
+        if(sound){ p.unMute(); p.setVolume(80); } else p.mute();
+        p.playVideo();
+        setTimeout(function(){ if(!started){ p.mute(); p.playVideo(); } },2500);
+      },
+      onStateChange:function(e){
+        if(e.data==1){started=true;document.getElementById('p').classList.add('on');document.body.classList.add('on');send('playing');}
+        if(e.data==0){document.getElementById('p').classList.remove('on');document.body.classList.remove('on');setTimeout(function(){send('ended')},900);}
+      },
+      onError:function(){ send('ended'); }
+    }});
+}
+</script>
+<script src="https://www.youtube.com/iframe_api"></script>
+</body></html>
