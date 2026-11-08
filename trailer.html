@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClearIPTV · tráiler</title>
+<meta name="robots" content="noindex">
+<!-- Reproductor de fondo de la ficha de ClearIPTV (Windows): tráiler de YouTube sin sonido con el
+     reproductor oficial. Uso: trailer.html?v=CLAVE_DE_YOUTUBE. Avisa a la app con «playing» y «ended». -->
+<style>html,body{margin:0;height:100%;background:#080B16;overflow:hidden}#p{position:absolute;inset:0;width:100%;height:100%}</style>
+</head><body><div id="p"></div>
+<script>
+function send(m){
+  try{ if(window.chrome&&chrome.webview){ chrome.webview.postMessage(m); return; } }catch(e){}
+  try{ if(window.Trailer&&Trailer.postMessage){ Trailer.postMessage(m); return; } }catch(e){}
+  try{ if(window.webkit&&webkit.messageHandlers&&webkit.messageHandlers.trailer){ webkit.messageHandlers.trailer.postMessage(m); return; } }catch(e){}
+}
+var v=new URLSearchParams(location.search).get('v')||'';
+if(!/^[\w-]{6,20}$/.test(v)) send('ended');
+function onYouTubeIframeAPIReady(){
+  new YT.Player('p',{videoId:v,host:'https://www.youtube-nocookie.com',
+    playerVars:{autoplay:1,mute:1,controls:0,disablekb:1,fs:0,rel:0,playsinline:1,iv_load_policy:3,origin:location.origin},
+    events:{
+      onReady:function(e){e.target.mute();e.target.playVideo();},
+      onStateChange:function(e){ if(e.data==1) send('playing'); if(e.data==0) send('ended'); },
+      onError:function(){ send('ended'); }
+    }});
+}
+</script>
+<script src="https://www.youtube.com/iframe_api"></script>
+</body></html>
